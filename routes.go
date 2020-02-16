@@ -2,6 +2,8 @@ package main
 
 import (
 	"net/http"
+
+	"./lib/handlefunc"
 )
 
 //Route Used to match requets with approaite handlers
@@ -15,4 +17,11 @@ type Route struct {
 //Routes slice holds all information on routes and what handler function to use
 type Routes []Route
 
-var routes = Routes{}
+var routes = Routes{
+	Route{
+		"index",
+		"GET",
+		"/",
+		handlefunc.LoadMainPage,
+	},
+}
