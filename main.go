@@ -6,7 +6,8 @@ import (
 	"log"
 	"net/http"
 
-	apphandle "./lib/handlefunc"
+	lib "github.com/IYZaytsev/VThacks-Backend/lib"
+	_ "github.com/gorilla/mux"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -14,11 +15,11 @@ import (
 
 func main() {
 	database, _ := sql.Open("sqlite3", "./recurT.db")
-	apphandle.PassContext(database)
+	lib.PassContext(database)
 	fmt.Println("starting router")
 	router := NewRouter()
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
-	log.Fatal(http.ListenAndServe(":8000", router))
+	log.Fatal(http.ListenAndServe(":8080", router))
 	/*
 		statement, _ := database.Prepare("INSERT INTO customers (customerid, firstname, lastname) VALUES (?,?,?)")
 		customerID := databasemethods.GenUUID()

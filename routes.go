@@ -3,7 +3,7 @@ package main
 import (
 	"net/http"
 
-	"./lib/handlefunc"
+	lib "github.com/IYZaytsev/VThacks-Backend/lib"
 )
 
 //Route Used to match requets with approaite handlers
@@ -22,6 +22,6 @@ var routes = Routes{
 		"index",
 		"GET",
 		"/",
-		handlefunc.LoadMainPage,
+		lib.LoadMainPage,
 	},
 }
