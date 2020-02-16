@@ -8,24 +8,28 @@ import (
 	guuid "github.com/google/uuid"
 )
 
-func genUUID() string {
+//GenUUID Generates a unique ID
+func GenUUID() string {
 	id := guuid.New()
 	return id.String()
 }
+
+//GetAllTransActions gets transactions
 func GetAllTransActions(datab *sql.DB) {
 	//CREATE TABLE IF NOT EXISTS transactions (transactionID TEXT PRIMARY KEY, ammount int, vendorid TEXT, accountid TEXT)
-	rows, _ := datab.Query("SELECT transactionID, ammount, vendorid, accountid FROM transactions")
+	rows, _ := datab.Query("SELECT transactionID, ammount, vendorid, accountid, date FROM transactions")
 	var tid string
-	var ammount int
+	var ammount float32
 	var vendorid string
 	var accountid string
+	var date string
 	for rows.Next() {
-		rows.Scan(&tid, &ammount, &vendorid, &accountid)
-		fmt.Println("VendorId: " + tid + " Ammount: " + strconv.Itoa(ammount) + " VendorId: " + vendorid + " AccountId:" + accountid)
+		rows.Scan(&tid, &ammount, &vendorid, &accountid, &date)
+		fmt.Println("TransactionID: " + tid + " Ammount: " + fmt.Sprintf("%f", ammount) + " VendorId: " + vendorid + " AccountId:" + accountid + " Date: " + date)
 	}
 }
 
-//updates account balance
+//GetALlVendors gets all vendors
 func GetALlVendors(datab *sql.DB) {
 	rows, _ := datab.Query("SELECT vendorid, vendorname FROM vendors")
 	var id string
@@ -35,6 +39,8 @@ func GetALlVendors(datab *sql.DB) {
 		fmt.Println("VendorID: " + id + " VendorName: " + vendorname)
 	}
 }
+
+//GetVendorByID gets all vendors by ID
 func GetVendorByID(datab *sql.DB, vendorID string) (string, string) {
 	statement, _ := datab.Prepare("SELECT vendorid, vendorName FROM vendors WHERE vendorid =?")
 	rows, _ := statement.Query(vendorID)
@@ -46,46 +52,65 @@ func GetVendorByID(datab *sql.DB, vendorID string) (string, string) {
 	}
 	return id, vendorName
 }
-func UpdateAccount(datab *sql.DB, accountID string, deltaBalance int) {
+
+//UpdateAccount updates accounts by ID to chance balance
+func UpdateAccount(datab *sql.DB, accountID string, deltaBalance float32) {
 	statement, _ := datab.Prepare("UPDATE accounts SET balance =? WHERE accountid =?")
 	statement.Exec(deltaBalance, accountID)
 
 }
-func ChargeAccount(datab *sql.DB, accountID string, chargeAmount int, vendorID string) {
+
+//ChargeAccount charges an account
+func ChargeAccount(datab *sql.DB, accountID string, chargeAmount float32, vendorID string, date string) {
+	//(transactionID TEXT PRIMARY KEY, ammount REAL, vendorid TEXT, accountid TEXT, date TEXT)
 	_, _, _, ballance := GetAccountByAccountID(datab, accountID)
+	println(ballance)
 	newBalance := ballance - chargeAmount
+	println(newBalance)
+	println(accountID)
+	println(chargeAmount)
+	println(vendorID)
+	println(date)
 	UpdateAccount(datab, accountID, newBalance)
-	statement, _ := datab.Prepare("INSERT INTO transactions (transactionid, accountid, vendorid, ammount) VALUES (?,?,?,?)")
-	statement.Exec(genUUID(), accountID, vendorID, chargeAmount)
+	statement, _ := datab.Prepare("INSERT INTO transactions (transactionID, accountid, vendorid, ammount, date) VALUES (?,?,?,?,?)")
+	rslt, _ := statement.Exec(GenUUID(), accountID, vendorID, chargeAmount, date)
+	rowaff, _ := rslt.RowsAffected()
+	println(rowaff)
 
 }
-func GetAccountByCustomerID(datab *sql.DB, customerID string) (string, string, string, int) {
+
+//GetAccountByCustomerID gets an account by customer id
+func GetAccountByCustomerID(datab *sql.DB, customerID string) (string, string, string, float32) {
 	var id string
 	var aID string
 	var atype string
-	var balance int
+	var balance float32
 	statement, _ := datab.Prepare("SELECT accountid, customerid, type, balance FROM accounts WHERE customerid =?")
 	rows, _ := statement.Query(customerID)
 	for rows.Next() {
 		rows.Scan(&aID, &id, &atype, &balance)
-		fmt.Println("AccountID:" + aID + " CustomerID:" + id + " Type: " + atype + " Balance: " + strconv.Itoa(balance))
+		fmt.Println("AccountID:" + aID + " CustomerID:" + id + " Type: " + atype + " Balance: " + fmt.Sprintf("%f", balance))
 	}
 	return id, aID, atype, balance
 }
-func GetAccountByAccountID(datab *sql.DB, accountID string) (string, string, string, int) {
+
+//GetAccountByAccountID gets an account by account id
+func GetAccountByAccountID(datab *sql.DB, accountID string) (string, string, string, float32) {
 	var id string
 	var aID string
 	var atype string
-	var balance int
+	var balance float32
 	statement, _ := datab.Prepare("SELECT accountid, customerid, type, balance FROM accounts WHERE accountid =?")
 	rows, _ := statement.Query(accountID)
 	for rows.Next() {
 		rows.Scan(&aID, &id, &atype, &balance)
-		//fmt.Println("AccountID:" + aID + ": " + "CustomerID:" + id + " Type: " + atype + " Balance: " + strconv.Itoa(balance))
+		//fmt.Println("AccountID:" + aID + ": " + "CustomerID:" + id + " Type: " + atype + " Balance: " + fmt.Sprintf("%f", balance))
 	}
 	return id, aID, atype, balance
 }
-func GetCustomerByID(datab *sql.DB, customerID string) (string, string, string) {
+
+//GetCustomerByCustomerID gets customer by Customer id
+func GetCustomerByCustomerID(datab *sql.DB, customerID string) (string, string, string) {
 	statement, _ := datab.Prepare("SELECT customerid, firstname, lastname FROM customers WHERE customerid =?")
 	rows, _ := statement.Query(customerID)
 	var id string
@@ -97,6 +122,8 @@ func GetCustomerByID(datab *sql.DB, customerID string) (string, string, string) 
 	}
 	return id, firstname, lastname
 }
+
+//PrintAllCustomers prints all customers to console
 func PrintAllCustomers(datab *sql.DB) {
 	rows, _ := datab.Query("SELECT customerid, firstname, lastname FROM customers")
 	var id string
@@ -109,7 +136,7 @@ func PrintAllCustomers(datab *sql.DB) {
 
 }
 
-// id is customer id, aID is account id
+//PrintAllAccounts prints all accounts to console
 func PrintAllAccounts(datab *sql.DB) {
 	var id string
 	var aID string
@@ -122,14 +149,15 @@ func PrintAllAccounts(datab *sql.DB) {
 	}
 }
 
+//ResetScheme Used to reset the scheme
 func ResetScheme(datab *sql.DB) {
 	statement, _ := datab.Prepare("CREATE TABLE IF NOT EXISTS customers (customerid TEXT PRIMARY KEY, firstname TEXT, lastname TEXT)")
 	statement.Exec()
-	statement, _ = datab.Prepare("CREATE TABLE IF NOT EXISTS accounts (accountid TEXT PRIMARY KEY,customerid INTEGER, type TEXT, balance INTEGER)")
+	statement, _ = datab.Prepare("CREATE TABLE IF NOT EXISTS accounts (accountid TEXT PRIMARY KEY,customerid INTEGER, type TEXT, balance REAL)")
 	statement.Exec()
 	statement, _ = datab.Prepare("CREATE TABLE IF NOT EXISTS vendors (vendorid TEXT PRIMARY KEY, vendorName TEXT )")
 	statement.Exec()
-	statement, _ = datab.Prepare("CREATE TABLE IF NOT EXISTS transactions (transactionID TEXT PRIMARY KEY, ammount int, vendorid TEXT, accountid TEXT)")
+	statement, _ = datab.Prepare("CREATE TABLE IF NOT EXISTS transactions (transactionID TEXT PRIMARY KEY, ammount REAL, vendorid TEXT, accountid TEXT, date TEXT)")
 	statement.Exec()
 
 }
